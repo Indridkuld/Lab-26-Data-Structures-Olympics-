@@ -16,8 +16,14 @@ const int ROWS = 4, COLS = 3, SIMS = 15;
 const int W1 = 10;
 
 int main() {
-    // results[0] = per-run (ROWS x COLS); results[1] = accumulators (sums across runs)
-    int results[2][ROWS][COLS] = {0};
+    //   "cube" (3-D array) layout:
+    //   results[dim][op][structure]
+    //     - dimemsion(dim): 0 => per-run measurements (this run's ROWS x COLS matrix)
+    //            1 => accumulator sums across runs (add results[0] into results[1] each run)
+    //     - operations(op): 0=Read, 1=Sort, 2=Insert, 3=Delete
+    //     - structure: 0=Vector, 1=List, 2=Set
+    // Units: microseconds. After SIMS runs, compute average = results[1][op][structure] / SIMS
+    long long results[2][ROWS][COLS] = {0}; 
     string cd;
 
     for (int run = 0; run < SIMS; ++run) {
@@ -157,7 +163,7 @@ int main() {
             results[0][3][i] = chrono::duration_cast<chrono::microseconds>(end - start).count();
         }
 
-        // accumulate this run
+        // accumulate this runs averages into results[1]
         for (int r = 0; r < ROWS; ++r)
             for (int c = 0; c < COLS; ++c)
                 results[1][r][c] += results[0][r][c];
