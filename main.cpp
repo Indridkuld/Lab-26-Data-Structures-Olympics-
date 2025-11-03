@@ -32,30 +32,31 @@ int main() {
             for (int c = 0; c < COLS; ++c)
                 results[0][r][c] = 0;
 
-        // read master containers once per run
+        // reads master containers once per run instead of per operation
+        // rename to master_* for clarity
         vector<string> master_vec;
         list<string> master_list;
         set<string> master_set;
         ifstream fin_master("codes.txt");
-        if (!fin_master.is_open()) {
+        if (!fin_master.is_open()) { // added error check for file open
             cerr << "Error: could not open codes.txt\n";
             return 1;
         }
         while (fin_master >> cd) {
-            master_vec.push_back(cd);
-            master_list.push_back(cd);
+            master_vec.push_back(cd); // uses the same token for all structures
+            master_list.push_back(cd); 
             master_set.insert(cd);
         }
         fin_master.close();
 
-        if (master_vec.empty()) {
+        if (master_vec.empty()) { // added check for empty file
             cerr << "Error: codes.txt produced no tokens.\n";
             return 1;
         }
 
         // testing for READ operations
         for (int i = 0; i < STRUCTURES; i++) {
-            ifstream fin("codes.txt");
+            ifstream fin("codes.txt"); // reopen for each structure to reset read position
             auto start = chrono::high_resolution_clock::now();
             switch(i) {
                 case 0: {  // read into a vector
@@ -83,8 +84,8 @@ int main() {
         }
 
         // testing for SORT operations
-        for (int i = 0; i < STRUCTURES; i++) {
-            auto start = chrono::high_resolution_clock::now();
+        for (int i = 0; i < STRUCTURES; i++) { 
+            auto start = chrono::high_resolution_clock::now(); 
             switch(i) {
                 case 0: {  // sort a vector
                     vector<string> tmp = master_vec;
