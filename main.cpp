@@ -95,7 +95,7 @@ int main() {
                         vector<string> tmp = data_vector;
                         size_t ind = tmp.size() / 2;
                 
-                        data_vector.insert(data_vector.begin() + ind_v, "TESTCODE");
+                        tmp.insert(tmp.begin() + ind, "TESTCODE");
                         auto end = chrono::high_resolution_clock::now();
                         auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
                         results[0][2][i] = duration.count();
@@ -114,10 +114,12 @@ int main() {
                         break;
                     }
                     case 2: {  // insert into a set
+                        set<string> tmp = data_set;
+
                         data_set.insert("TESTCODE");
                         auto end = chrono::high_resolution_clock::now();
                         auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-                        results[2][i] = duration.count();
+                        results[0][2][i] = duration.count();
                         break;
                     }
                 }
@@ -125,41 +127,35 @@ int main() {
 
             // testing for DELETE operations
             for (int i = 0; i < STRUCTURES; i++) {
-                // select a target value in the vector 
-                int ind = data_vector.size() / 2;
-                string target_v = data_vector[ind];
-
-                // select a target value in the list
-                auto it1 = data_list.begin();
-                advance(it1, ind);
-                string target_l = *it1;
-
-                // select a target value in the set
-                auto it2 = data_set.begin();
-                advance(it2, ind);
-                string target_s = *it2;
-                
                 auto start = chrono::high_resolution_clock::now();
                 switch(i) {
                     case 0: {  // delete by value from vector
-                        data_vector.erase(remove(data_vector.begin(), data_vector.end(), target_v));
+                        vector<string> tmp = data_vector;
+                        size_t ind = tmp.size() / 2;
+                        string target = tmp[ind];
+                        tmp.erase(remove(tmp.begin(), tmp.end(), target), tmp.end());
                         auto end = chrono::high_resolution_clock::now();
-                        auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-                        results[3][i] = duration.count();
+                        results[0][3][i] = chrono::duration_cast<chrono::microseconds>(end - start).count();
                         break;
                     }
                     case 1: {  // delete by value from list
-                        data_list.remove(target_l);
+                        list<string> tmp(data_list.begin(), data_list.end());
+                        auto it = tmp.begin();
+                        advance(it, tmp.size() / 2);
+                        string target = *it;
+                        tmp.remove(target);
                         auto end = chrono::high_resolution_clock::now();
-                        auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-                        results[3][i] = duration.count();
+                        results[0][3][i] = chrono::duration_cast<chrono::microseconds>(end - start).count();
                         break;
                     }
                     case 2: {  // delete by value from set
-                        data_set.erase(target_s);    
+                        set<string> tmp = data_set;
+                        auto it = tmp.begin();
+                        advance(it, tmp.size() / 2);
+                        string target = *it;
+                        tmp.erase(target);
                         auto end = chrono::high_resolution_clock::now();
-                        auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-                        results[3][i] = duration.count();
+                        results[0][3][i] = chrono::duration_cast<chrono::microseconds>(end - start).count();
                         break;
                     }
                 }
