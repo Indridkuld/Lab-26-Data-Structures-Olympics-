@@ -29,11 +29,12 @@ int main() {
         // testing for READ operations
             for (int i = 0; i < STRUCTURES; i++) {
                 ifstream fin("codes.txt");
+                vector<string> tmp;
                 auto start = chrono::high_resolution_clock::now();
                 switch(i) {
                     case 0: {  // read into a vector
                         while (fin >> cd)
-                                data_vector.push_back(cd);
+                                tmp.push_back(cd);
                         auto end = chrono::high_resolution_clock::now();
                         auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
                         results[0][i] = duration.count();
