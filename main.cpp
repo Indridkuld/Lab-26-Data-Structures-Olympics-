@@ -12,144 +12,140 @@ using namespace std;
 
 // const int SZ = 20000, COLS = 3, ROWS = 4, TESTS = 4;
 const int STRUCTURES = 3;
-const int ROWS = 4, COLS = 3;
+const int ROWS = 4, COLS = 3, SIMS = 15; // ROWS == number of operations (Read,Sort,Insert,Delete)
+const int OPS = ROWS; // alias for clarity when we use a 3D cube: [op][structure][sim]
 const int W1 = 10;
 
 int main() {
-    int results[ROWS][COLS];
+    // Use a 3D array (cube) to store multiple simulation runs.
+    // cube[op][structure][sim]
+    // - op (0..ROWS-1): operation slice (0=Read,1=Sort,2=Insert,3=Delete)
+    // - structure (0..STRUCTURES-1): data structure slice (0=Vector,1=List,2=Set)
+    // - sim (0..SIMS-1): repeated measurement index for averaging/stability
+    long long cube[OPS][STRUCTURES][SIMS] = {0};
     string cd;
     vector<string> data_vector;
     list<string> data_list;
     set<string> data_set;
 
-    // testing for READ operations
-    for (int i = 0; i < STRUCTURES; i++) {
-        ifstream fin("codes.txt");
-        auto start = chrono::high_resolution_clock::now();
-        switch(i) {
-            case 0: {  // read into a vector
-                while (fin >> cd)
-                        data_vector.push_back(cd);
-                auto end = chrono::high_resolution_clock::now();
-                auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-                results[0][i] = duration.count();
-                break;
-            }
-            case 1: {  // read into a list
-                while (fin >> cd)
-                        data_list.push_back(cd);
-                auto end = chrono::high_resolution_clock::now();
-                auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-                results[0][i] = duration.count();
-                break;
-            }
-            case 2: {  // read into a set
-                while (fin >> cd)
-                        data_set.insert(cd);
-                auto end = chrono::high_resolution_clock::now();
-                auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-                results[0][i] = duration.count();
-                break;
-            }
-        }
-        fin.close();
+    // Read the data once to populate master containers used for non-read tests.
+    ifstream fin_master("codes.txt");
+    if (!fin_master.is_open()) {
+        cerr << "Error: could not open codes.txt (place a sample file next to the executable)\n";
+        return 1;
+    }
+    while (fin_master >> cd) {
+        data_vector.push_back(cd);
+        data_list.push_back(cd);
+        data_set.insert(cd);
+    }
+    fin_master.close();
+
+    if (data_vector.empty()) {
+        cerr << "Error: codes.txt produced no tokens.\n";
+        return 1;
     }
 
-    // testing for SORT operations
+    // Measure READ operations SIMS times per structure (open file each sim so the file is re-read)
     for (int i = 0; i < STRUCTURES; i++) {
-        auto start = chrono::high_resolution_clock::now();
-        switch(i) {
-            case 0: {  // sort a vector
-                sort(data_vector.begin(), data_vector.end());
-                auto end = chrono::high_resolution_clock::now();
-                auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-                results[1][i] = duration.count();
-                break;
+        for (int s = 0; s < SIMS; s++) {
+            auto start = chrono::high_resolution_clock::now();
+            if (i == 0) { // vector
+                vector<string> tmp;
+                ifstream fin("codes.txt");
+                while (fin >> cd) tmp.push_back(cd);
+            } else if (i == 1) { // list
+                list<string> tmp;
+                ifstream fin("codes.txt");
+                while (fin >> cd) tmp.push_back(cd);
+            } else if (i == 2) { // set
+                set<string> tmp;
+                ifstream fin("codes.txt");
+                while (fin >> cd) tmp.insert(cd);
             }
-            case 1: {  // sort a list
-                data_list.sort();
-                auto end = chrono::high_resolution_clock::now();
-                auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-                results[1][i] = duration.count();
-                break;
-            }
-            case 2: {  // can't sort a set, so set to -1
-                results[1][i] = -1;
-                break;
-            }
+            auto end = chrono::high_resolution_clock::now();
+            cube[0][i][s] = chrono::duration_cast<chrono::microseconds>(end - start).count();
         }
     }
 
-    // testing for INSERT operations
+    // SORT operations: perform SIMS runs and store each run in the cube.
     for (int i = 0; i < STRUCTURES; i++) {
-        int ind_v = data_vector.size() / 2;
-        int ind_l = data_list.size() / 2;
-        auto start = chrono::high_resolution_clock::now();
-        switch(i) {
-            case 0: {  // insert into a vector
-                data_vector.insert(data_vector.begin() + ind_v, "TESTCODE");
+        for (int s = 0; s < SIMS; s++) {
+            if (i == 0) { // vector
+                vector<string> tmp = data_vector; // copy from master
+                auto start = chrono::high_resolution_clock::now();
+                sort(tmp.begin(), tmp.end());
                 auto end = chrono::high_resolution_clock::now();
-                auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-                results[2][i] = duration.count();
-                break;
-            }
-            case 1: {  // insert into a list
-                auto it = data_list.begin();
-                advance(it, ind_l);
-                data_list.insert(it, "TESTCODE");
+                cube[1][i][s] = chrono::duration_cast<chrono::microseconds>(end - start).count();
+            } else if (i == 1) { // list
+                list<string> tmp(data_list.begin(), data_list.end());
+                auto start = chrono::high_resolution_clock::now();
+                tmp.sort();
                 auto end = chrono::high_resolution_clock::now();
-                auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-                results[2][i] = duration.count();
-                break;
-            }
-            case 2: {  // insert into a set
-                data_set.insert("TESTCODE");
-                auto end = chrono::high_resolution_clock::now();
-                auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-                results[2][i] = duration.count();
-                break;
+                cube[1][i][s] = chrono::duration_cast<chrono::microseconds>(end - start).count();
+            } else { // set: not applicable
+                cube[1][i][s] = -1;
             }
         }
     }
 
-    // testing for DELETE operations
+    // INSERT operations: copy master container each sim, then insert in middle.
     for (int i = 0; i < STRUCTURES; i++) {
-        // select a target value in the vector 
-        int ind = data_vector.size() / 2;
-        string target_v = data_vector[ind];
-
-        // select a target value in the list
-        auto it1 = data_list.begin();
-        advance(it1, ind);
-        string target_l = *it1;
-
-        // select a target value in the set
-        auto it2 = data_set.begin();
-        advance(it2, ind);
-        string target_s = *it2;
-        
-        auto start = chrono::high_resolution_clock::now();
-        switch(i) {
-            case 0: {  // delete by value from vector
-                data_vector.erase(remove(data_vector.begin(), data_vector.end(), target_v));
+        for (int s = 0; s < SIMS; s++) {
+            if (i == 0) { // vector
+                vector<string> tmp = data_vector;
+                size_t ind_v = tmp.size() / 2;
+                auto start = chrono::high_resolution_clock::now();
+                tmp.insert(tmp.begin() + ind_v, "TESTCODE");
                 auto end = chrono::high_resolution_clock::now();
-                auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-                results[3][i] = duration.count();
-                break;
+                cube[2][i][s] = chrono::duration_cast<chrono::microseconds>(end - start).count();
+            } else if (i == 1) { // list
+                list<string> tmp(data_list.begin(), data_list.end());
+                auto it = tmp.begin();
+                advance(it, tmp.size() / 2);
+                auto start = chrono::high_resolution_clock::now();
+                tmp.insert(it, "TESTCODE");
+                auto end = chrono::high_resolution_clock::now();
+                cube[2][i][s] = chrono::duration_cast<chrono::microseconds>(end - start).count();
+            } else { // set
+                set<string> tmp = data_set;
+                auto start = chrono::high_resolution_clock::now();
+                tmp.insert("TESTCODE");
+                auto end = chrono::high_resolution_clock::now();
+                cube[2][i][s] = chrono::duration_cast<chrono::microseconds>(end - start).count();
             }
-            case 1: {  // delete by value from list
-                data_list.remove(target_l);
+        }
+    }
+
+    // DELETE operations: copy master container each sim, then delete the middle element/value.
+    for (int i = 0; i < STRUCTURES; i++) {
+        for (int s = 0; s < SIMS; s++) {
+            if (i == 0) { // vector
+                vector<string> tmp = data_vector;
+                size_t ind = tmp.size() / 2;
+                string target_v = tmp[ind];
+                auto start = chrono::high_resolution_clock::now();
+                tmp.erase(remove(tmp.begin(), tmp.end(), target_v), tmp.end());
                 auto end = chrono::high_resolution_clock::now();
-                auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-                results[3][i] = duration.count();
-                break;
-            }
-            case 2: {  // delete by value from set
-                data_set.erase(target_s);    
+                cube[3][i][s] = chrono::duration_cast<chrono::microseconds>(end - start).count();
+            } else if (i == 1) { // list
+                list<string> tmp(data_list.begin(), data_list.end());
+                auto it1 = tmp.begin();
+                advance(it1, tmp.size() / 2);
+                string target_l = *it1;
+                auto start = chrono::high_resolution_clock::now();
+                tmp.remove(target_l);
                 auto end = chrono::high_resolution_clock::now();
-                auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-                results[3][i] = duration.count();
-                break;
+                cube[3][i][s] = chrono::duration_cast<chrono::microseconds>(end - start).count();
+            } else { // set
+                set<string> tmp = data_set;
+                auto it2 = tmp.begin();
+                advance(it2, tmp.size() / 2);
+                string target_s = *it2;
+                auto start = chrono::high_resolution_clock::now();
+                tmp.erase(target_s);
+                auto end = chrono::high_resolution_clock::now();
+                cube[3][i][s] = chrono::duration_cast<chrono::microseconds>(end - start).count();
             }
         }
     }
@@ -157,12 +153,27 @@ int main() {
     string labels[] = {"Read", "Sort", "Insert", "Delete"};
     cout << setw(W1) << "Operation" << setw(W1) << "Vector" << setw(W1) << "List"
          << setw(W1) << "Set" << endl;
-    for (int i = 0; i < 4; i++) {
-        cout << setw(W1) << labels[i];
-        for (int j = 0; j < COLS; j++) 
-            cout << setw(W1) << results[i][j];
+    // Print average across SIMS runs for each op/structure
+    for (int op = 0; op < OPS; op++) {
+        cout << setw(W1) << labels[op];
+        for (int st = 0; st < STRUCTURES; st++) {
+            long long sum = 0;
+            int count = 0;
+            for (int s = 0; s < SIMS; s++) {
+                long long v = cube[op][st][s];
+                if (v >= 0) { sum += v; ++count; }
+            }
+            if (count == 0) cout << setw(W1) << "N/A";
+            else cout << setw(W1) << (sum / count);
+        }
         cout << endl;
     }
+
+    // Nominal sample output for testing: show a few raw cube entries
+    cout << "\nSample raw timings (microseconds):\n";
+    cout << "cube[Read][Vector][0] = " << cube[0][0][0] << "\n";
+    cout << "cube[Sort][Vector][0] = " << cube[1][0][0] << "\n";
+    cout << "cube[Insert][List][0] = " << cube[2][1][0] << "\n";
     
 
     return 0;
