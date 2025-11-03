@@ -17,7 +17,7 @@ const int W1 = 10;
 
 int main() {
     // results[0] = per-run (ROWS x COLS); results[1] = accumulators (sums across runs)
-    long long results[2][ROWS][COLS] = {0};
+    int results[2][ROWS][COLS] = {0};
     string cd;
 
     for (int run = 0; run < SIMS; ++run) {
@@ -163,27 +163,16 @@ int main() {
                 results[1][r][c] += results[0][r][c];
     }
 
-    // string labels[] = {"Read", "Sort", "Insert", "Delete"};
-    // cout << "Number of simulations: " << SIMS << endl;
-    // cout << setw(W1) << "Operation" << setw(W1) << "Vector" << setw(W1) << "List"
-    //      << setw(W1) << "Set" << endl;
-    // for (int i = 0; i < ROWS; i++) {
-    //     cout << setw(W1) << labels[i];
-    //     for (int j = 0; j < COLS; j++) 
-    //         cout << setw(W1) << (results[1][i][j] / SIMS);
-    //     cout << endl;
-    // }
-
     string labels[] = {"Read", "Sort", "Insert", "Delete"};
+    cout << "Number of simulations: " << SIMS << endl;
     cout << setw(W1) << "Operation" << setw(W1) << "Vector" << setw(W1) << "List"
          << setw(W1) << "Set" << endl;
     for (int i = 0; i < ROWS; i++) {
         cout << setw(W1) << labels[i];
         for (int j = 0; j < COLS; j++) 
-            cout << setw(W1) << results[1][i][j];
+            cout << setw(W1) << (results[1][i][j] / SIMS);
         cout << endl;
     }
-    
 
     return 0;
 }
