@@ -1,3 +1,5 @@
+// COMSC-210 | Lab 26: Data Structures Olympics| Aidan Woodcock | 2025-11-02
+// IDE used: Visual Studio Code
 #include <iostream>
 #include <fstream>
 #include <chrono>
