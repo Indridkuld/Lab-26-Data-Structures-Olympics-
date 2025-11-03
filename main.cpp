@@ -22,7 +22,7 @@ int main() {
     int results[2][ROWS][COLS] = {0};
     string cd;
     for (int i = 0; i < SIMS; i++) { // run experiement SIMS times
-        for (int t = 0; t < ROWS; t++)  // zero per-run slice 
+        for (int t = 0; t < ROWS; t++)  
             for (int j = 0; j < COLS; j++) 
                 results[0][t][j] = 0;
         
