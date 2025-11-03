@@ -170,7 +170,7 @@ int main() {
     for (int i = 0; i < ROWS; i++) {
         cout << setw(W1) << labels[i];
         for (int j = 0; j < COLS; j++) 
-            cout << setw(W1) << (results[1][i][j] / SIMS)
+            cout << setw(W1) << (results[1][i][j] / SIMS);
         cout << endl;
     }
 
