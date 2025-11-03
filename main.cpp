@@ -47,101 +47,114 @@ int main() {
             return 1;
         }
 
-        // READ timings: re-open and read into temporary containers per structure
-        for (int st = 0; st < STRUCTURES; ++st) {
+        // testing for READ operations
+        for (int i = 0; i < STRUCTURES; i++) {
+            ifstream fin("codes.txt");
             auto start = chrono::high_resolution_clock::now();
-            if (st == 0) {
-                vector<string> tmp;
-                ifstream fin("codes.txt");
-                while (fin >> cd) tmp.push_back(cd);
-            } else if (st == 1) {
-                list<string> tmp;
-                ifstream fin("codes.txt");
-                while (fin >> cd) tmp.push_back(cd);
-            } else {
-                set<string> tmp;
-                ifstream fin("codes.txt");
-                while (fin >> cd) tmp.insert(cd);
+            switch(i) {
+                case 0: {  // read into a vector
+                    vector<string> tmp;
+                    while (fin >> cd)
+                        tmp.push_back(cd);
+                    break;
+                }
+                case 1: {  // read into a list
+                    list<string> tmp;
+                    while (fin >> cd)
+                        tmp.push_back(cd);
+                    break;
+                }
+                case 2: {  // read into a set
+                    set<string> tmp;
+                    while (fin >> cd)
+                        tmp.insert(cd);
+                    break;
+                }
             }
             auto end = chrono::high_resolution_clock::now();
-            results[0][0][st] = chrono::duration_cast<chrono::microseconds>(end - start).count();
+            results[0][0][i] = chrono::duration_cast<chrono::microseconds>(end - start).count();
+            fin.close();
         }
 
-        // SORT timings
-        for (int st = 0; st < STRUCTURES; ++st) {
-            if (st == 0) {
-                vector<string> tmp = master_vec;
-                auto start = chrono::high_resolution_clock::now();
-                sort(tmp.begin(), tmp.end());
-                auto end = chrono::high_resolution_clock::now();
-                results[0][1][st] = chrono::duration_cast<chrono::microseconds>(end - start).count();
-            } else if (st == 1) {
-                list<string> tmp(master_list.begin(), master_list.end());
-                auto start = chrono::high_resolution_clock::now();
-                tmp.sort();
-                auto end = chrono::high_resolution_clock::now();
-                results[0][1][st] = chrono::duration_cast<chrono::microseconds>(end - start).count();
-            } else {
-                // Set is already ordered; treat as 0 for averaging
-                results[0][1][st] = 0;
+        // testing for SORT operations
+        for (int i = 0; i < STRUCTURES; i++) {
+            auto start = chrono::high_resolution_clock::now();
+            switch(i) {
+                case 0: {  // sort a vector
+                    vector<string> tmp = master_vec;
+                    sort(tmp.begin(), tmp.end());
+                    break;
+                }
+                case 1: {  // sort a list
+                    list<string> tmp(master_list.begin(), master_list.end());
+                    tmp.sort();
+                    break;
+                }
+                case 2: {  // can't sort a set, so record 0
+                    break;
+                }
             }
+            auto end = chrono::high_resolution_clock::now();
+            results[0][1][i] = chrono::duration_cast<chrono::microseconds>(end - start).count();
         }
 
-        // INSERT timings
-        for (int st = 0; st < STRUCTURES; ++st) {
-            if (st == 0) {
-                vector<string> tmp = master_vec;
-                size_t ind = tmp.size() / 2;
-                auto start = chrono::high_resolution_clock::now();
-                tmp.insert(tmp.begin() + ind, "TESTCODE");
-                auto end = chrono::high_resolution_clock::now();
-                results[0][2][st] = chrono::duration_cast<chrono::microseconds>(end - start).count();
-            } else if (st == 1) {
-                list<string> tmp(master_list.begin(), master_list.end());
-                auto it = tmp.begin();
-                advance(it, tmp.size() / 2);
-                auto start = chrono::high_resolution_clock::now();
-                tmp.insert(it, "TESTCODE");
-                auto end = chrono::high_resolution_clock::now();
-                results[0][2][st] = chrono::duration_cast<chrono::microseconds>(end - start).count();
-            } else {
-                set<string> tmp = master_set;
-                auto start = chrono::high_resolution_clock::now();
-                tmp.insert("TESTCODE");
-                auto end = chrono::high_resolution_clock::now();
-                results[0][2][st] = chrono::duration_cast<chrono::microseconds>(end - start).count();
+        // testing for INSERT operations
+        for (int i = 0; i < STRUCTURES; i++) {
+            auto start = chrono::high_resolution_clock::now();
+            switch(i) {
+                case 0: {  // insert into a vector
+                    vector<string> tmp = master_vec;
+                    size_t ind = tmp.size() / 2;
+                    tmp.insert(tmp.begin() + ind, "TESTCODE");
+                    break;
+                }
+                case 1: {  // insert into a list
+                    list<string> tmp(master_list.begin(), master_list.end());
+                    auto it = tmp.begin();
+                    advance(it, tmp.size() / 2);
+                    tmp.insert(it, "TESTCODE");
+                    break;
+                }
+                case 2: {  // insert into a set
+                    set<string> tmp = master_set;
+                    tmp.insert("TESTCODE");
+                    break;
+                }
             }
+            auto end = chrono::high_resolution_clock::now();
+            results[0][2][i] = chrono::duration_cast<chrono::microseconds>(end - start).count();
         }
 
-        // DELETE timings
-        for (int st = 0; st < STRUCTURES; ++st) {
-            if (st == 0) {
-                vector<string> tmp = master_vec;
-                size_t ind = tmp.size() / 2;
-                string target = tmp[ind];
-                auto start = chrono::high_resolution_clock::now();
-                tmp.erase(remove(tmp.begin(), tmp.end(), target), tmp.end());
-                auto end = chrono::high_resolution_clock::now();
-                results[0][3][st] = chrono::duration_cast<chrono::microseconds>(end - start).count();
-            } else if (st == 1) {
-                list<string> tmp(master_list.begin(), master_list.end());
-                auto it = tmp.begin();
-                advance(it, tmp.size() / 2);
-                string target = *it;
-                auto start = chrono::high_resolution_clock::now();
-                tmp.remove(target);
-                auto end = chrono::high_resolution_clock::now();
-                results[0][3][st] = chrono::duration_cast<chrono::microseconds>(end - start).count();
-            } else {
-                set<string> tmp = master_set;
-                auto it = tmp.begin();
-                advance(it, tmp.size() / 2);
-                string target = *it;
-                auto start = chrono::high_resolution_clock::now();
-                tmp.erase(target);
-                auto end = chrono::high_resolution_clock::now();
-                results[0][3][st] = chrono::duration_cast<chrono::microseconds>(end - start).count();
+        // testing for DELETE operations
+        for (int i = 0; i < STRUCTURES; i++) {
+            auto start = chrono::high_resolution_clock::now();
+            switch(i) {
+                case 0: {  // delete by value from vector
+                    vector<string> tmp = master_vec;
+                    size_t ind = tmp.size() / 2;
+                    string target = tmp[ind];
+                    tmp.erase(remove(tmp.begin(), tmp.end(), target), tmp.end());
+                    break;
+                }
+                case 1: {  // delete by value from list
+                    list<string> tmp(master_list.begin(), master_list.end());
+                    auto it = tmp.begin();
+                    advance(it, tmp.size() / 2);
+                    string target = *it;
+                    tmp.remove(target);
+                    break;
+                }
+                case 2: {  // delete by value from set
+                    set<string> tmp = master_set;
+                    auto it = tmp.begin();
+                    advance(it, tmp.size() / 2);
+                    string target = *it;
+                    tmp.erase(target);
+                    break;
+                }
             }
+            auto end = chrono::high_resolution_clock::now();
+            results[0][3][i] = chrono::duration_cast<chrono::microseconds>(end - start).count();
         }
 
         // accumulate this run
@@ -150,14 +163,24 @@ int main() {
                 results[1][r][c] += results[0][r][c];
     }
 
+    // string labels[] = {"Read", "Sort", "Insert", "Delete"};
+    // cout << "Number of simulations: " << SIMS << endl;
+    // cout << setw(W1) << "Operation" << setw(W1) << "Vector" << setw(W1) << "List"
+    //      << setw(W1) << "Set" << endl;
+    // for (int i = 0; i < ROWS; i++) {
+    //     cout << setw(W1) << labels[i];
+    //     for (int j = 0; j < COLS; j++) 
+    //         cout << setw(W1) << (results[1][i][j] / SIMS);
+    //     cout << endl;
+    // }
+
     string labels[] = {"Read", "Sort", "Insert", "Delete"};
-    cout << "Number of simulations: " << SIMS << endl;
     cout << setw(W1) << "Operation" << setw(W1) << "Vector" << setw(W1) << "List"
          << setw(W1) << "Set" << endl;
     for (int i = 0; i < ROWS; i++) {
         cout << setw(W1) << labels[i];
         for (int j = 0; j < COLS; j++) 
-            cout << setw(W1) << (results[1][i][j] / SIMS);
+            cout << setw(W1) << results[1][i][j];
         cout << endl;
     }
     
